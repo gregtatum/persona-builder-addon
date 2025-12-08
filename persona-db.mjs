@@ -131,16 +131,38 @@ export async function listPersonas() {
 }
 
 /**
+ * Lookup a history record by persona and URL.
+ * @param {string} personaId
+ * @param {string} url
+ * @returns {Promise<HistoryRecord | undefined>}
+ */
+export async function findHistoryByPersonaUrl(personaId, url) {
+  const tx = await transaction("readonly", ["history"]);
+  const index = tx.objectStore("history").index("byPersonaUrl");
+  const key = IDBKeyRange.only([personaId, url]);
+  return new Promise((resolve, reject) => {
+    const req = index.get(key);
+    req.onerror = () => reject(req.error || new Error("lookup failed"));
+    req.onsuccess = () => {
+      tx.commit?.();
+      resolve(/** @type {HistoryRecord | undefined} */ (req.result));
+    };
+  });
+}
+
+/**
  * @param {HistoryInput} history
  * @returns {Promise<HistoryRecord>}
  */
 export async function addHistoryEntry(history) {
+  const existing = await findHistoryByPersonaUrl(history.personaId, history.url);
   const tx = await transaction("readwrite", ["history"]);
+  const store = tx.objectStore("history");
   const record = {
     ...history,
-    id: history.id || makeId()
+    id: existing?.id || history.id || makeId()
   };
-  await put(tx.objectStore("history"), record);
+  await put(store, record);
   tx.commit?.();
   return record;
 }
