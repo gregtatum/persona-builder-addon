@@ -4,6 +4,7 @@
  */
 
 import { addHistoryEntry, addPersona, listPersonas } from "./persona-db.mjs";
+import { log } from "./utils.mjs";
 
 /**
  * @template {HTMLElement} T
@@ -65,7 +66,7 @@ async function refreshPersonas(selectId) {
   if (personas.length === 0) {
     const created = await addPersona("Default Persona");
     personas = [created];
-    console.log("Seeded default persona");
+    log("Seeded default persona");
     selectId = created.id;
   }
   renderPersonas();
@@ -97,27 +98,27 @@ function persistLastPersonaId(id) {
 async function addPersonaFlow() {
   const name = (personaNameInput.value || "").trim();
   if (!name) {
-    console.log("Persona add cancelled: no name provided");
+    log("Persona add cancelled: no name provided");
     return;
   }
   const persona = await addPersona(name);
   await refreshPersonas(persona.id);
   personaNameInput.value = "";
   personaForm.classList.add("hidden");
-  console.log("Persona added", persona);
+  log("Persona added", persona);
 }
 
 async function captureCurrentPersona() {
   const selectedId = personaSelect.value;
   const persona = personas.find((p) => p.id === selectedId);
   if (!persona) {
-    console.log("Capture skipped: no persona selected");
+    log("Capture skipped: no persona selected");
     return;
   }
   const tabs = await browser.tabs.query({ active: true, currentWindow: true });
   const tab = tabs[0];
   if (!tab || !tab.url) {
-    console.log("Capture skipped: no active tab url");
+    log("Capture skipped: no active tab url");
     return;
   }
   const title = tab.title || tab.url;
@@ -132,7 +133,7 @@ async function captureCurrentPersona() {
     visitedAt
   };
   const history = await addHistoryEntry(historyPayload);
-  console.log("Captured page for persona", { persona, history });
+  log("Captured page for persona", { persona, history });
 }
 
 function togglePersonaForm() {
@@ -159,7 +160,7 @@ personaSelect.addEventListener("change", () => {
   if (persona) {
     persistLastPersonaId(persona.id);
   }
-  console.log("Persona switched", persona);
+  log("Persona switched", persona);
 });
 
 const initialPersonaId = loadLastPersonaId();
