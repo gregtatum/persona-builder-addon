@@ -26,6 +26,8 @@ const addPersonaBtn = getElement("add-persona", HTMLButtonElement);
 const savePersonaBtn = getElement("save-persona", HTMLButtonElement);
 const captureBtn = getElement("capture", HTMLButtonElement);
 
+const LAST_PERSONA_KEY = "personaBuilder:lastPersonaId";
+
 /** @type {PersonaRecord[]} */
 let personas = [];
 
@@ -44,11 +46,14 @@ function renderPersonas() {
  */
 function selectPersona(personaId) {
   if (!personaId && personas.length > 0) {
-    personaSelect.value = personas[0].id;
+    const firstId = personas[0].id;
+    personaSelect.value = firstId;
+    persistLastPersonaId(firstId);
     return;
   }
   if (personaId) {
     personaSelect.value = personaId;
+    persistLastPersonaId(personaId);
   }
 }
 
@@ -65,6 +70,28 @@ async function refreshPersonas(selectId) {
   }
   renderPersonas();
   selectPersona(selectId);
+}
+
+/**
+ * @returns {string | undefined}
+ */
+function loadLastPersonaId() {
+  try {
+    return localStorage.getItem(LAST_PERSONA_KEY) || undefined;
+  } catch (_error) {
+    return undefined;
+  }
+}
+
+/**
+ * @param {string} id
+ */
+function persistLastPersonaId(id) {
+  try {
+    localStorage.setItem(LAST_PERSONA_KEY, id);
+  } catch (_error) {
+    // Best effort; ignore storage errors (e.g., quota).
+  }
 }
 
 async function addPersonaFlow() {
@@ -111,7 +138,11 @@ personaNameInput.addEventListener("keydown", (event) => {
 captureBtn.addEventListener("click", captureCurrentPersona);
 personaSelect.addEventListener("change", () => {
   const persona = personas.find((p) => p.id === personaSelect.value);
+  if (persona) {
+    persistLastPersonaId(persona.id);
+  }
   console.log("Persona switched", persona);
 });
 
-void refreshPersonas();
+const initialPersonaId = loadLastPersonaId();
+void refreshPersonas(initialPersonaId);
