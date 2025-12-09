@@ -15,6 +15,7 @@
   "license": "ISC",
   "devDependencies": {
     "@types/firefox-webext-browser": "^143.0.0",
+    "@types/jest": "^30.0.0",
     "fake-indexeddb": "^6.2.5",
     "jest": "^30.2.0",
     "typescript": "^5.9.3",
