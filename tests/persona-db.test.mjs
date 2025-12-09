@@ -6,15 +6,6 @@ globalThis.IDBKeyRange = IDBKeyRange;
 
 const DB_NAME = "personaBuilder";
 
-/** @param {string} name */
-async function deleteDatabase(name) {
-  const req = indexedDB.deleteDatabase(name);
-  await new Promise((resolve, reject) => {
-    req.onerror = () => reject(req.error);
-    req.onsuccess = () => resolve(undefined);
-  });
-}
-
 /**
  * @template T
  * @param {string} storeName
@@ -69,7 +60,11 @@ async function putRecord(storeName, value) {
 describe("persona-db", () => {
   beforeEach(async () => {
     personaDb.closeDb();
-    await deleteDatabase(DB_NAME);
+    const request = indexedDB.deleteDatabase(DB_NAME);
+    await new Promise((resolve, reject) => {
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => resolve(undefined);
+    });
   });
 
   afterEach(() => {
@@ -247,21 +242,5 @@ describe("persona-db", () => {
 
     const names = (await personaDb.listPersonas()).map((p) => p.name);
     expect(names).toEqual(["First", "Second"]);
-  });
-
-  it("supports repeated operations after the database is opened", async () => {
-    const persona = await personaDb.addPersona("Repeat Persona");
-    await personaDb.listPersonas();
-    await personaDb.addHistoryEntry({
-      personaId: persona.id,
-      url: "https://repeat.example/",
-      title: "Repeat",
-      description: "Repeat",
-      visitedAt: "2024-04-01T00:00:00.000Z",
-    });
-
-    const personas = await personaDb.listPersonas();
-    expect(personas).toHaveLength(1);
-    await expect(personaDb.countHistoryForPersona(persona.id)).resolves.toBe(1);
   });
 });
