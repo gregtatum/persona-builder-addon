@@ -33,6 +33,20 @@ async function load() {
     }
     await renderPersonaAndHistory(id);
   });
+
+  const refresh = async () => {
+    const current = await getActivePersonaId();
+    await renderPersonaAndHistory(current);
+  };
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+      void refresh();
+    }
+  });
+  window.addEventListener("focus", () => {
+    void refresh();
+  });
 }
 
 /**
