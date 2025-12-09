@@ -27,6 +27,7 @@ const personaNameInput = getElement("persona-name", HTMLInputElement);
 const addPersonaBtn = getElement("add-persona", HTMLButtonElement);
 const savePersonaBtn = getElement("save-persona", HTMLButtonElement);
 const captureBtn = getElement("capture", HTMLButtonElement);
+const openOptionsLink = getElement("open-options", HTMLAnchorElement);
 
 const BADGE_COLOR = "#2563eb";
 
@@ -145,6 +146,10 @@ personaSelect.addEventListener("change", () => {
     void updateBadge(persona.id);
   }
   log("Persona switched", persona);
+});
+openOptionsLink.addEventListener("click", (event) => {
+  event.preventDefault();
+  void browser.runtime.openOptionsPage();
 });
 
 void (async () => {

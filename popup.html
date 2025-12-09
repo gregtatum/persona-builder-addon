@@ -72,6 +72,18 @@
       .hidden {
         display: none;
       }
+
+      .options-link {
+        display: inline-block;
+        margin-top: 10px;
+        font-size: 13px;
+        color: #2563eb;
+        text-decoration: none;
+      }
+
+      .options-link:hover {
+        text-decoration: underline;
+      }
     </style>
   </head>
   <body>
@@ -95,6 +107,7 @@
         </div>
       </div>
     </div>
+    <a class="options-link" id="open-options" href="#">Open settings</a>
     <script type="module" src="popup.mjs"></script>
   </body>
 </html>
