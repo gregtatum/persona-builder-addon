@@ -26,6 +26,20 @@
         margin: 0;
         color: #475569;
       }
+      .controls {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+      .controls label {
+        font-weight: 600;
+      }
+      select {
+        min-width: 200px;
+        padding: 6px 8px;
+        font: inherit;
+      }
       .card {
         background: #fff;
         border: 1px solid #e2e8f0;
@@ -74,6 +88,10 @@
       <p class="subtitle">See the active persona and its captured pages.</p>
     </header>
     <section class="card">
+      <div class="controls">
+        <label for="persona-select">Active persona</label>
+        <select id="persona-select"></select>
+      </div>
       <h2 id="persona-name">Active persona: loading…</h2>
       <ul id="history-list" class="history-list"></ul>
       <p id="empty-state" class="empty" hidden>No captures yet.</p>

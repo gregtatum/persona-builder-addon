@@ -3,19 +3,61 @@
  * @import {HistoryRecord} from "./types"
  */
 
-import { getActivePersonaId } from "./active-persona.mjs";
+import { getActivePersonaId, setActivePersonaId, watchActivePersona } from "./active-persona.mjs";
 import { listHistoryForPersona, listPersonas } from "./persona-db.mjs";
 import { log } from "./utils.mjs";
 
 const personaNameEl = document.getElementById("persona-name");
 const historyListEl = document.getElementById("history-list");
 const emptyStateEl = document.getElementById("empty-state");
+const personaSelectEl = /** @type {HTMLSelectElement | null} */ (document.getElementById("persona-select"));
 
 async function load() {
+  const personas = await listPersonas();
+  renderPersonaOptions(personas);
+
   const personaId = await getActivePersonaId();
+  await renderPersonaAndHistory(personaId);
+
+  if (personaSelectEl) {
+    personaSelectEl.addEventListener("change", async () => {
+      const selectedId = personaSelectEl.value;
+      await setActivePersonaId(selectedId);
+      await renderPersonaAndHistory(selectedId);
+    });
+  }
+
+  watchActivePersona(async (id) => {
+    if (id && personaSelectEl) {
+      personaSelectEl.value = id;
+    }
+    await renderPersonaAndHistory(id);
+  });
+}
+
+/**
+ * @param {import("./types").PersonaRecord[]} personas
+ */
+function renderPersonaOptions(personas) {
+  if (!personaSelectEl) {
+    return;
+  }
+  personaSelectEl.innerHTML = "";
+  personas.forEach((persona) => {
+    const option = document.createElement("option");
+    option.value = persona.id;
+    option.textContent = persona.name;
+    personaSelectEl.appendChild(option);
+  });
+}
+
+/**
+ * @param {string | undefined} personaId
+ */
+async function renderPersonaAndHistory(personaId) {
   if (!personaId) {
     renderPersonaName("No active persona");
-    renderEmpty(true);
+    renderHistory([]);
     return;
   }
 
@@ -25,6 +67,10 @@ async function load() {
 
   const history = await listHistoryForPersona(personaId);
   renderHistory(history);
+
+  if (personaSelectEl) {
+    personaSelectEl.value = personaId;
+  }
 }
 
 /**
