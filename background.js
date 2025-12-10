@@ -1,6 +1,10 @@
 // @ts-check
 import { getActivePersonaId, watchActivePersona } from "./active-persona.mjs";
-import { addHistoryEntry, countHistoryForPersona } from "./persona-db.mjs";
+import {
+  addHistoryEntry,
+  addPageSnapshot,
+  countHistoryForPersona,
+} from "./persona-db.mjs";
 
 /**
  * @param {any} message
@@ -66,7 +70,7 @@ async function handleCommandAddHistory() {
 
   const visitedAt = new Date().toISOString();
   const title = tab.title || tab.url;
-  await addHistoryEntry({
+  const history = await addHistoryEntry({
     personaId,
     url: tab.url,
     title,
@@ -76,7 +80,7 @@ async function handleCommandAddHistory() {
   log("Added history from command", { personaId, url: tab.url });
   void updateBadge(personaId);
   if (tab.id !== undefined) {
-    void capturePageSnapshot(tab.id);
+    void capturePageSnapshot(tab.id, history);
   }
 }
 
@@ -95,8 +99,9 @@ async function updateBadge(personaId) {
 /**
  * Request a SingleFile snapshot in the active tab and log the content.
  * @param {number | undefined} tabId
+ * @param {import("./types").HistoryRecord} history
  */
-async function capturePageSnapshot(tabId) {
+async function capturePageSnapshot(tabId, history) {
   if (typeof tabId !== "number") {
     log("SingleFile snapshot skipped: missing tab id");
     return;
@@ -105,11 +110,18 @@ async function capturePageSnapshot(tabId) {
     const response = await browser.tabs.sendMessage(tabId, {
       type: "capture-page-snapshot",
     });
-    if (response?.ok) {
-      log("Snapshot captured", response.content);
-    } else {
+    if (!response?.ok) {
       log("SingleFile snapshot failed", response?.error);
+      return;
     }
+    await addPageSnapshot({
+      historyId: history.id,
+      personaId: history.personaId,
+      url: history.url,
+      capturedAt: new Date().toISOString(),
+      html: response.content,
+    });
+    log("Snapshot stored", { historyId: history.id, url: history.url });
   } catch (error) {
     log("SingleFile snapshot errored", error);
   }
