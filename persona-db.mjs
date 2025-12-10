@@ -225,6 +225,23 @@ export async function addPageSnapshot(snapshot) {
 }
 
 /**
+ * Fetch a stored page snapshot by history id.
+ * @param {string} historyId
+ * @returns {Promise<PageSnapshotRecord | undefined>}
+ */
+export async function getPageSnapshot(historyId) {
+  const tx = await transaction("readonly", ["pageSnapshots"]);
+  const req = tx.objectStore("pageSnapshots").get(historyId);
+  return new Promise((resolve, reject) => {
+    req.onerror = () => reject(req.error || new Error("get snapshot failed"));
+    req.onsuccess = () => {
+      tx.commit?.();
+      resolve(/** @type {PageSnapshotRecord | undefined} */ (req.result));
+    };
+  });
+}
+
+/**
  * @param {string} personaId
  * @param {InsightInput} insight
  * @returns {Promise<InsightRecord>}

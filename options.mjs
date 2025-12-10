@@ -10,6 +10,7 @@ import {
 } from "./active-persona.mjs";
 import {
   deleteHistoryEntry,
+  getPageSnapshot,
   listHistoryForPersona,
   listPersonas,
 } from "./persona-db.mjs";
@@ -149,7 +150,45 @@ function renderHistory(history) {
     link.textContent = entry.url;
     meta.appendChild(link);
 
-    li.appendChild(meta);
+    const header = document.createElement("div");
+    header.style.display = "flex";
+    header.style.gap = "12px";
+    header.style.alignItems = "center";
+
+    const actions = document.createElement("div");
+    actions.className = "history-actions";
+
+    const viewBtn = document.createElement("button");
+    viewBtn.className = "delete-btn";
+    viewBtn.type = "button";
+    viewBtn.textContent = "View snapshot";
+    viewBtn.style.color = "#0f172a";
+    viewBtn.style.borderColor = "#e2e8f0";
+    viewBtn.style.background = "#fff";
+
+    const container = document.createElement("div");
+    container.style.width = "100%";
+
+    viewBtn.addEventListener("click", async () => {
+      const existing = container.querySelector("iframe");
+      if (existing) {
+        existing.remove();
+        return;
+      }
+      try {
+        const snapshot = await getPageSnapshot(entry.id);
+        if (!snapshot?.html) {
+          viewBtn.textContent = "No snapshot";
+          return;
+        }
+        const iframe = document.createElement("iframe");
+        iframe.className = "snapshot-frame";
+        iframe.srcdoc = snapshot.html;
+        container.appendChild(iframe);
+      } catch (error) {
+        log("Failed to load snapshot", error);
+      }
+    });
 
     const deleteBtn = document.createElement("button");
     deleteBtn.className = "delete-btn";
@@ -159,7 +198,13 @@ function renderHistory(history) {
       await deleteHistoryEntry(entry.id);
       await renderPersonaAndHistory(entry.personaId);
     });
-    li.appendChild(deleteBtn);
+
+    actions.appendChild(viewBtn);
+    actions.appendChild(deleteBtn);
+    header.appendChild(meta);
+    header.appendChild(actions);
+    li.appendChild(header);
+    li.appendChild(container);
 
     historyListEl.appendChild(li);
   });
