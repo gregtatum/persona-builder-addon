@@ -329,8 +329,10 @@ async function importPersonaZip(file) {
       throw new Error("persona.json not found in zip");
     }
     showNotification(`Loading persona from ${file.name}...`);
-    const personaJson = await personaEntry.getData(new ZipTextWriter());
-    const parsed = JSON.parse(personaJson);
+    const personaJson = personaEntry.getData
+      ? await personaEntry.getData(new ZipTextWriter())
+      : "";
+    const parsed = personaJson ? JSON.parse(personaJson) : {};
     const personas = await listPersonas();
     const targetName = ensureUniqueName(parsed?.persona?.name || "Imported Persona", personas);
     const personaRecord = await addPersona(targetName);
@@ -350,7 +352,7 @@ async function importPersonaZip(file) {
         visitedAt: item.visitedAt || new Date().toISOString(),
       };
       const savedHistory = await addHistoryEntry(historyInput);
-      if (snapshotEntry) {
+      if (snapshotEntry?.getData) {
         const html = await snapshotEntry.getData(new ZipTextWriter());
         await addPageSnapshot({
           historyId: savedHistory.id,

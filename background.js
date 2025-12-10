@@ -158,9 +158,8 @@ async function verifyZipJsAvailable() {
     return;
   }
   try {
-    /** @type {import("./vendor/zipjs/index.js").ZipReader | undefined} */
-    let reader;
-    reader = new ZipReader(new ZipBlobReader(new Blob([])));
+    /** @type {import("./vendor/zipjs/index.js").ZipReader<Blob>} */
+    const reader = new ZipReader(new ZipBlobReader(new Blob([])));
     await reader.close();
     log("zip.js smoke test succeeded");
   } catch (error) {

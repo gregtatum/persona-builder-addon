@@ -189,35 +189,43 @@ export async function deletePersona(personaId) {
 
   // Delete history and snapshots
   for (const entry of historyEntries) {
-    await new Promise((resolve, reject) => {
-      const req = tx.objectStore("history").delete(entry.id);
-      req.onerror = () => reject(req.error || new Error("delete history failed"));
-      req.onsuccess = () => resolve();
-    });
-    await new Promise((resolve, reject) => {
-      const req = tx.objectStore("pageSnapshots").delete(entry.id);
-      req.onerror = () => reject(req.error || new Error("delete snapshot failed"));
-      req.onsuccess = () => resolve();
-    });
+    await /** @type {Promise<void>} */ (
+      new Promise((resolve, reject) => {
+        const req = tx.objectStore("history").delete(entry.id);
+        req.onerror = () => reject(req.error || new Error("delete history failed"));
+        req.onsuccess = () => resolve();
+      })
+    );
+    await /** @type {Promise<void>} */ (
+      new Promise((resolve, reject) => {
+        const req = tx.objectStore("pageSnapshots").delete(entry.id);
+        req.onerror = () => reject(req.error || new Error("delete snapshot failed"));
+        req.onsuccess = () => resolve();
+      })
+    );
   }
 
   // Delete insights
   const insightIndex = tx.objectStore("insights").index("byPersona");
   const insightEntries = await getAll(/** @type {IDBIndex} */ (insightIndex), IDBKeyRange.only(personaId));
   for (const insight of insightEntries) {
-    await new Promise((resolve, reject) => {
-      const req = tx.objectStore("insights").delete(insight.id);
-      req.onerror = () => reject(req.error || new Error("delete insight failed"));
-      req.onsuccess = () => resolve();
-    });
+    await /** @type {Promise<void>} */ (
+      new Promise((resolve, reject) => {
+        const req = tx.objectStore("insights").delete(insight.id);
+        req.onerror = () => reject(req.error || new Error("delete insight failed"));
+        req.onsuccess = () => resolve();
+      })
+    );
   }
 
   // Delete persona
-  await new Promise((resolve, reject) => {
-    const req = tx.objectStore("personas").delete(personaId);
-    req.onerror = () => reject(req.error || new Error("delete persona failed"));
-    req.onsuccess = () => resolve();
-  });
+  await /** @type {Promise<void>} */ (
+    new Promise((resolve, reject) => {
+      const req = tx.objectStore("personas").delete(personaId);
+      req.onerror = () => reject(req.error || new Error("delete persona failed"));
+      req.onsuccess = () => resolve();
+    })
+  );
 
   tx.commit?.();
 }
