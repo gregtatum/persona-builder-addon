@@ -194,6 +194,34 @@ describe("persona-db", () => {
     });
   });
 
+  it("retrieves a page snapshot by history id", async () => {
+    const persona = await personaDb.addPersona("Get Snapshot Persona");
+    const history = await personaDb.addHistoryEntry({
+      personaId: persona.id,
+      url: "https://snap2.example/",
+      title: "Snap 2",
+      description: "Snap 2",
+      visitedAt: "2024-01-07T00:00:00.000Z",
+    });
+
+    await personaDb.addPageSnapshot({
+      historyId: history.id,
+      personaId: persona.id,
+      url: history.url,
+      capturedAt: "2024-01-08T00:00:00.000Z",
+      html: "<p>snapshot</p>",
+    });
+
+    const snapshot = await personaDb.getPageSnapshot(history.id);
+    expect(snapshot).toMatchObject({
+      historyId: history.id,
+      html: "<p>snapshot</p>",
+    });
+
+    const missing = await personaDb.getPageSnapshot("missing-id");
+    expect(missing).toBeUndefined();
+  });
+
   it("adds insights with generated and provided ids", async () => {
     const persona = await personaDb.addPersona("Insight Persona");
 

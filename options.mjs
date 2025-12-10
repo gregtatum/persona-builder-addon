@@ -173,6 +173,7 @@ function renderHistory(history) {
       const existing = container.querySelector("iframe");
       if (existing) {
         existing.remove();
+        viewBtn.textContent = "View snapshot";
         return;
       }
       try {
@@ -185,6 +186,7 @@ function renderHistory(history) {
         iframe.className = "snapshot-frame";
         iframe.srcdoc = snapshot.html;
         container.appendChild(iframe);
+        viewBtn.textContent = "Hide snapshot";
       } catch (error) {
         log("Failed to load snapshot", error);
       }
