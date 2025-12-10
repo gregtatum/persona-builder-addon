@@ -10,6 +10,7 @@ import {
 } from "./active-persona.mjs";
 import {
   deleteHistoryEntry,
+  deletePersona,
   getPageSnapshot,
   listHistoryForPersona,
   listPersonas,
@@ -43,6 +44,9 @@ const personaSelectEl = /** @type {HTMLSelectElement | null} */ (
 const saveZipBtn = /** @type {HTMLButtonElement | null} */ (
   document.getElementById("save-zip-btn")
 );
+const deletePersonaBtn = /** @type {HTMLButtonElement | null} */ (
+  document.getElementById("delete-persona-btn")
+);
 const dropOverlay = document.getElementById("drop-overlay");
 const notificationEl = document.getElementById("notification");
 
@@ -63,6 +67,10 @@ async function load() {
 
   if (saveZipBtn) {
     saveZipBtn.addEventListener("click", () => void handleSaveZip());
+  }
+
+  if (deletePersonaBtn) {
+    deletePersonaBtn.addEventListener("click", () => void handleDeletePersona());
   }
 
   setupDropImport();
@@ -124,6 +132,9 @@ async function renderPersonaAndHistory(personaId) {
 
   if (saveZipBtn) {
     saveZipBtn.disabled = !history.length;
+  }
+  if (deletePersonaBtn) {
+    deletePersonaBtn.disabled = !personaId;
   }
 
   if (personaSelectEl) {
@@ -248,6 +259,29 @@ function renderEmpty(isEmpty) {
   emptyStateEl.hidden = !isEmpty;
 }
 
+async function handleDeletePersona() {
+  try {
+    const personaId = await getActivePersonaId();
+    if (!personaId) {
+      return;
+    }
+    const personas = await listPersonas();
+    const persona = personas.find((p) => p.id === personaId);
+    const name = persona?.name || "this persona";
+    if (!confirm(`Delete ${name} and all its history?`)) {
+      return;
+    }
+    await deletePersona(personaId);
+    const remaining = await listPersonas();
+    const newActive = remaining[0]?.id;
+    await setActivePersonaId(newActive || "");
+    await renderPersonaAndHistory(newActive);
+    showNotification(`Deleted ${name}`);
+  } catch (error) {
+    log("Failed to delete persona", error);
+  }
+}
+
 function setupDropImport() {
   if (dropOverlay) {
     dropOverlay.style.display = "none";
@@ -329,6 +363,7 @@ async function importPersonaZip(file) {
     }
 
     await reader.close();
+    await setActivePersonaId(personaRecord.id);
     await renderPersonaAndHistory(personaRecord.id);
     log("Imported persona from zip", { file: file.name, persona: targetName });
     showNotification(`Persona "${targetName}" was added`);

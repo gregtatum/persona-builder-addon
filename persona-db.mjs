@@ -178,6 +178,51 @@ export async function deleteHistoryEntry(historyId) {
 }
 
 /**
+ * Delete a persona and all related history and snapshots.
+ * @param {string} personaId
+ * @returns {Promise<void>}
+ */
+export async function deletePersona(personaId) {
+  const tx = await transaction("readwrite", ["personas", "history", "pageSnapshots", "insights"]);
+  const historyIndex = tx.objectStore("history").index("byPersona");
+  const historyEntries = await getAll(/** @type {IDBIndex} */ (historyIndex), IDBKeyRange.only(personaId));
+
+  // Delete history and snapshots
+  for (const entry of historyEntries) {
+    await new Promise((resolve, reject) => {
+      const req = tx.objectStore("history").delete(entry.id);
+      req.onerror = () => reject(req.error || new Error("delete history failed"));
+      req.onsuccess = () => resolve();
+    });
+    await new Promise((resolve, reject) => {
+      const req = tx.objectStore("pageSnapshots").delete(entry.id);
+      req.onerror = () => reject(req.error || new Error("delete snapshot failed"));
+      req.onsuccess = () => resolve();
+    });
+  }
+
+  // Delete insights
+  const insightIndex = tx.objectStore("insights").index("byPersona");
+  const insightEntries = await getAll(/** @type {IDBIndex} */ (insightIndex), IDBKeyRange.only(personaId));
+  for (const insight of insightEntries) {
+    await new Promise((resolve, reject) => {
+      const req = tx.objectStore("insights").delete(insight.id);
+      req.onerror = () => reject(req.error || new Error("delete insight failed"));
+      req.onsuccess = () => resolve();
+    });
+  }
+
+  // Delete persona
+  await new Promise((resolve, reject) => {
+    const req = tx.objectStore("personas").delete(personaId);
+    req.onerror = () => reject(req.error || new Error("delete persona failed"));
+    req.onsuccess = () => resolve();
+  });
+
+  tx.commit?.();
+}
+
+/**
  * Lookup a history record by persona and URL.
  * @param {string} personaId
  * @param {string} url

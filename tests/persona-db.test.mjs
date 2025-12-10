@@ -280,6 +280,40 @@ describe("persona-db", () => {
     expect(snapshots).toHaveLength(0);
   });
 
+  it("deletes a persona and related records", async () => {
+    const persona = await personaDb.addPersona("Persona To Remove");
+    const entry = await personaDb.addHistoryEntry({
+      personaId: persona.id,
+      url: "https://remove.me/",
+      title: "Remove Me",
+      description: "Desc",
+      visitedAt: "2024-02-01T00:00:00.000Z",
+    });
+    await personaDb.addPageSnapshot({
+      historyId: entry.id,
+      personaId: persona.id,
+      url: entry.url,
+      capturedAt: "2024-02-02T00:00:00.000Z",
+      html: "<p>to be removed</p>",
+    });
+    await personaDb.addInsight(persona.id, {
+      kind: "note",
+      content: "remove insight",
+      createdAt: "2024-02-03T00:00:00.000Z",
+    });
+
+    await personaDb.deletePersona(persona.id);
+
+    const personas = await readAllFromStore("personas");
+    const history = await readAllFromStore("history");
+    const snapshots = await readAllFromStore("pageSnapshots");
+    const insights = await readAllFromStore("insights");
+    expect(personas).toHaveLength(0);
+    expect(history).toHaveLength(0);
+    expect(snapshots).toHaveLength(0);
+    expect(insights).toHaveLength(0);
+  });
+
   it("sorts personas by createdAt ascending", async () => {
     const first = await personaDb.addPersona("First");
     const second = await personaDb.addPersona("Second");
