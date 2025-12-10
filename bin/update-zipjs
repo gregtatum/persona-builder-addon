@@ -40,6 +40,8 @@ cp -R "${SRC_DIST}/." "${DEST_DIR}/"
 cp "${TMP_DIR}/package/README.md" "${DEST_DIR}/README.md"
 cp "${TMP_DIR}/package/package.json" "${DEST_DIR}/package.json"
 cp "${TMP_DIR}/package/index.d.ts" "${DEST_DIR}/index.d.ts"
+cp "${TMP_DIR}/package/index.js" "${DEST_DIR}/index.js"
+cp -R "${TMP_DIR}/package/lib" "${DEST_DIR}/lib"
 
 echo "Done. Vendored files:"
 ls "${DEST_DIR}"
