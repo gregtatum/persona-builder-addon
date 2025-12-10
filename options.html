@@ -145,6 +145,26 @@
         z-index: 10;
         pointer-events: none;
       }
+      #notification {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: #0f172a;
+        color: #fff;
+        padding: 10px 14px;
+        border-radius: 6px;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+        opacity: 0;
+        transform: translateY(10px);
+        transition: opacity 150ms ease, transform 150ms ease;
+        pointer-events: none;
+        z-index: 20;
+        font-weight: 600;
+      }
+      #notification.show {
+        opacity: 1;
+        transform: translateY(0);
+      }
     </style>
   </head>
   <body>
@@ -153,6 +173,7 @@
       <h1>View Persona</h1>
       <p class="subtitle">See the active persona and its captured pages.</p>
     </header>
+    <div id="notification" aria-live="polite" aria-atomic="true"></div>
     <section class="card">
       <div class="controls">
         <label for="persona-select">Active persona</label>

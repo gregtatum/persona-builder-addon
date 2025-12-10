@@ -44,6 +44,7 @@ const saveZipBtn = /** @type {HTMLButtonElement | null} */ (
   document.getElementById("save-zip-btn")
 );
 const dropOverlay = document.getElementById("drop-overlay");
+const notificationEl = document.getElementById("notification");
 
 async function load() {
   const personas = await listPersonas();
@@ -293,6 +294,7 @@ async function importPersonaZip(file) {
     if (!personaEntry) {
       throw new Error("persona.json not found in zip");
     }
+    showNotification(`Loading persona from ${file.name}...`);
     const personaJson = await personaEntry.getData(new ZipTextWriter());
     const parsed = JSON.parse(personaJson);
     const personas = await listPersonas();
@@ -329,6 +331,7 @@ async function importPersonaZip(file) {
     await reader.close();
     await renderPersonaAndHistory(personaRecord.id);
     log("Imported persona from zip", { file: file.name, persona: targetName });
+    showNotification(`Persona "${targetName}" was added`);
   } catch (error) {
     log("Failed to import persona zip", error);
   }
@@ -348,6 +351,20 @@ function ensureUniqueName(desiredName, personas) {
     counter += 1;
   }
   return `${desiredName} (${counter})`;
+}
+
+/**
+ * @param {string} message
+ */
+function showNotification(message) {
+  if (!notificationEl) {
+    return;
+  }
+  notificationEl.textContent = message;
+  notificationEl.classList.add("show");
+  setTimeout(() => {
+    notificationEl?.classList.remove("show");
+  }, 2200);
 }
 
 async function handleSaveZip() {
