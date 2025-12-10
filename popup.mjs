@@ -10,7 +10,14 @@ import {
   countHistoryForPersona,
   listPersonas,
 } from "./persona-db.mjs";
-import { log } from "./utils.mjs";
+
+/**
+ * @param {any} message
+ * @param {...any} rest
+ */
+export function log(message, ...rest) {
+  console.log("[persona]", message, ...rest);
+}
 
 /**
  * @template {HTMLElement} T
@@ -124,7 +131,7 @@ async function captureCurrentPersona() {
   log("Captured page for persona", { persona, history });
   await updateBadge(persona.id);
   if (tab.id) {
-    void captureSingleFileSnapshot(tab.id);
+    void capturePageSnapshot(tab.id);
   }
 }
 
@@ -183,15 +190,15 @@ async function updateBadge(personaId) {
  * Console log a SingleFile snapshot from the tab.
  * @param {number} tabId
  */
-async function captureSingleFileSnapshot(tabId) {
+async function capturePageSnapshot(tabId) {
   try {
     const response = await browser.tabs.sendMessage(tabId, {
-      type: "capture-singlefile",
+      type: "capture-page-snapshot",
     });
-    if (response?.ok) {
-      console.log(response.content || "");
+    if (response.ok) {
+      log("Snapshot captured", response.content);
     } else {
-      log("SingleFile snapshot failed", response?.error);
+      log("SingleFile snapshot failed", response.error);
     }
   } catch (error) {
     log("SingleFile snapshot errored", error);

@@ -12,4 +12,10 @@ else
   echo "Using default Firefox"
 fi
 
-web-ext run --browser-console --keep-profile-changes --config "$CONFIG_PATH" "${extra_args[@]}"
+web-ext run \
+  --browser-console \
+  --keep-profile-changes \
+  --firefox-profile ./profile \
+  --profile-create-if-missing \
+  --watch-ignored "**/profile" \
+  --config "$CONFIG_PATH" "${extra_args[@]}"

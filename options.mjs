@@ -3,14 +3,31 @@
  * @import {HistoryRecord} from "./types"
  */
 
-import { getActivePersonaId, setActivePersonaId, watchActivePersona } from "./active-persona.mjs";
-import { deleteHistoryEntry, listHistoryForPersona, listPersonas } from "./persona-db.mjs";
-import { log } from "./utils.mjs";
+import {
+  getActivePersonaId,
+  setActivePersonaId,
+  watchActivePersona,
+} from "./active-persona.mjs";
+import {
+  deleteHistoryEntry,
+  listHistoryForPersona,
+  listPersonas,
+} from "./persona-db.mjs";
+
+/**
+ * @param {any} message
+ * @param {...any} rest
+ */
+export function log(message, ...rest) {
+  console.log("[persona]", message, ...rest);
+}
 
 const personaNameEl = document.getElementById("persona-name");
 const historyListEl = document.getElementById("history-list");
 const emptyStateEl = document.getElementById("empty-state");
-const personaSelectEl = /** @type {HTMLSelectElement | null} */ (document.getElementById("persona-select"));
+const personaSelectEl = /** @type {HTMLSelectElement | null} */ (
+  document.getElementById("persona-select")
+);
 
 async function load() {
   const personas = await listPersonas();
