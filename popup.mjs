@@ -131,7 +131,11 @@ async function captureCurrentPersona() {
   log("Captured page for persona", { persona, history });
   await updateBadge(persona.id);
   if (tab.id) {
-    void capturePageSnapshot(tab.id);
+    void browser.runtime.sendMessage({
+      type: "capture-page-snapshot",
+      tabId: tab.id,
+      history,
+    });
   }
 }
 
@@ -183,24 +187,5 @@ async function updateBadge(personaId) {
     await browser.browserAction.setBadgeText({ text: String(count) });
   } catch (error) {
     log("Badge update failed", error);
-  }
-}
-
-/**
- * Console log a SingleFile snapshot from the tab.
- * @param {number} tabId
- */
-async function capturePageSnapshot(tabId) {
-  try {
-    const response = await browser.tabs.sendMessage(tabId, {
-      type: "capture-page-snapshot",
-    });
-    if (response.ok) {
-      log("Snapshot captured", response.content);
-    } else {
-      log("SingleFile snapshot failed", response.error);
-    }
-  } catch (error) {
-    log("SingleFile snapshot errored", error);
   }
 }

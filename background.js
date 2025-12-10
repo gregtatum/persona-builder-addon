@@ -43,6 +43,9 @@ browser.runtime.onInstalled.addListener(() => {
  */
 browser.runtime.onMessage.addListener((message) => {
   log("Persona Builder stub received message", message);
+  if (message?.type === "capture-page-snapshot") {
+    void handleCaptureSnapshotRequest(message);
+  }
 });
 
 browser.commands.onCommand.addListener(async (command) => {
@@ -125,4 +128,17 @@ async function capturePageSnapshot(tabId, history) {
   } catch (error) {
     log("SingleFile snapshot errored", error);
   }
+}
+
+/**
+ * Handle capture requests forwarded from the popup (includes tab and history).
+ * @param {{ tabId?: number; history?: import("./types").HistoryRecord }} message
+ */
+async function handleCaptureSnapshotRequest(message) {
+  const { tabId, history } = message;
+  if (!history || typeof tabId !== "number") {
+    log("Snapshot request skipped: missing tab or history", { tabId, history });
+    return;
+  }
+  await capturePageSnapshot(tabId, history);
 }
