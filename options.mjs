@@ -13,11 +13,16 @@ import {
   getPageSnapshot,
   listHistoryForPersona,
   listPersonas,
+  addPersona,
+  addHistoryEntry,
+  addPageSnapshot
 } from "./persona-db.mjs";
 import {
   BlobReader as ZipBlobReader,
   BlobWriter as ZipBlobWriter,
+  TextWriter as ZipTextWriter,
   ZipWriter,
+  ZipReader,
   configure as configureZip,
 } from "./vendor/zipjs/index.js";
 
@@ -38,6 +43,7 @@ const personaSelectEl = /** @type {HTMLSelectElement | null} */ (
 const saveZipBtn = /** @type {HTMLButtonElement | null} */ (
   document.getElementById("save-zip-btn")
 );
+const dropOverlay = document.getElementById("drop-overlay");
 
 async function load() {
   const personas = await listPersonas();
@@ -57,6 +63,8 @@ async function load() {
   if (saveZipBtn) {
     saveZipBtn.addEventListener("click", () => void handleSaveZip());
   }
+
+  setupDropImport();
 
   watchActivePersona(async (id) => {
     if (id && personaSelectEl) {
@@ -237,6 +245,109 @@ function renderEmpty(isEmpty) {
     return;
   }
   emptyStateEl.hidden = !isEmpty;
+}
+
+function setupDropImport() {
+  if (dropOverlay) {
+    dropOverlay.style.display = "none";
+  }
+
+  const showOverlay = () => {
+    if (dropOverlay) dropOverlay.style.display = "grid";
+  };
+  const hideOverlay = () => {
+    if (dropOverlay) dropOverlay.style.display = "none";
+  };
+
+  window.addEventListener("dragover", (event) => {
+    event.preventDefault();
+    if (!event.dataTransfer || !event.dataTransfer.types.includes("Files")) {
+      return;
+    }
+    showOverlay();
+  });
+
+  window.addEventListener("dragleave", () => {
+    hideOverlay();
+  });
+
+  window.addEventListener("drop", (event) => {
+    event.preventDefault();
+    hideOverlay();
+    const file = event.dataTransfer?.files?.[0];
+    if (file) {
+      void importPersonaZip(file);
+    }
+  });
+}
+
+/**
+ * @param {File} file
+ */
+async function importPersonaZip(file) {
+  try {
+    configureZip({ useWebWorkers: false });
+    const reader = new ZipReader(new ZipBlobReader(file));
+    const entries = await reader.getEntries();
+    const personaEntry = entries.find((entry) => entry.filename === "persona.json");
+    if (!personaEntry) {
+      throw new Error("persona.json not found in zip");
+    }
+    const personaJson = await personaEntry.getData(new ZipTextWriter());
+    const parsed = JSON.parse(personaJson);
+    const personas = await listPersonas();
+    const targetName = ensureUniqueName(parsed?.persona?.name || "Imported Persona", personas);
+    const personaRecord = await addPersona(targetName);
+
+    const historyItems = Array.isArray(parsed?.history) ? parsed.history : [];
+    for (const item of historyItems) {
+      const snapshotPath = typeof item.snapshotPath === "string" ? item.snapshotPath.replace(/^\.\//, "") : null;
+      const snapshotEntry = snapshotPath
+        ? entries.find((entry) => entry.filename === snapshotPath)
+        : undefined;
+      /** @type {import("./types").HistoryInput} */
+      const historyInput = {
+        personaId: personaRecord.id,
+        url: item.url,
+        title: item.title || item.url,
+        description: item.description || "",
+        visitedAt: item.visitedAt || new Date().toISOString(),
+      };
+      const savedHistory = await addHistoryEntry(historyInput);
+      if (snapshotEntry) {
+        const html = await snapshotEntry.getData(new ZipTextWriter());
+        await addPageSnapshot({
+          historyId: savedHistory.id,
+          personaId: personaRecord.id,
+          url: savedHistory.url,
+          capturedAt: item.capturedAt || savedHistory.visitedAt,
+          html
+        });
+      }
+    }
+
+    await reader.close();
+    await renderPersonaAndHistory(personaRecord.id);
+    log("Imported persona from zip", { file: file.name, persona: targetName });
+  } catch (error) {
+    log("Failed to import persona zip", error);
+  }
+}
+
+/**
+ * @param {string} desiredName
+ * @param {import("./types").PersonaRecord[]} personas
+ */
+function ensureUniqueName(desiredName, personas) {
+  const existingNames = new Set(personas.map((p) => p.name));
+  if (!existingNames.has(desiredName)) {
+    return desiredName;
+  }
+  let counter = 2;
+  while (existingNames.has(`${desiredName} (${counter})`)) {
+    counter += 1;
+  }
+  return `${desiredName} (${counter})`;
 }
 
 async function handleSaveZip() {

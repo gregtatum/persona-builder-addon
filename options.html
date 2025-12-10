@@ -132,9 +132,23 @@
         background: #1d4ed8;
         border-color: #1d4ed8;
       }
+      #drop-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(37, 99, 235, 0.08);
+        border: 2px dashed #2563eb;
+        display: grid;
+        place-items: center;
+        font-size: 20px;
+        font-weight: 700;
+        color: #1d4ed8;
+        z-index: 10;
+        pointer-events: none;
+      }
     </style>
   </head>
   <body>
+    <div id="drop-overlay" hidden>Drop Persona Zip to import</div>
     <header>
       <h1>View Persona</h1>
       <p class="subtitle">See the active persona and its captured pages.</p>
