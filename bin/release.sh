@@ -44,6 +44,9 @@ npm version major --no-git-tag-version >/dev/null
 PKG_VERSION="$(node -p "require('./package.json').version")"
 TAG="${TAG:-v${PKG_VERSION}}"
 
+echo "Syncing manifest version to $PKG_VERSION ..."
+node ./bin/sync-version-number.js
+
 if git rev-parse "$TAG" >/dev/null 2>&1; then
   echo "Tag $TAG already exists. Delete or set TAG=<new> to override." >&2
   exit 1
