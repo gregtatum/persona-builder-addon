@@ -190,7 +190,7 @@ async function renderPersonaAndHistory(personaId) {
     renderPersonaName("", { disabled: true, placeholder: "No active persona" });
     renderHistoryTab([], historyProps);
     await renderInsights(undefined, insightsProps);
-    renderExportJson(undefined, undefined, []);
+    renderExportJson(undefined, undefined, [], []);
     return;
   }
 
@@ -202,9 +202,10 @@ async function renderPersonaAndHistory(personaId) {
   });
 
   const history = await listHistoryForPersona(personaId);
+  const insights = await listInsightsForPersona(personaId);
   renderHistoryTab(history, historyProps);
   await renderInsights(personaId, insightsProps);
-  renderExportJson(personaId, persona, history);
+  renderExportJson(personaId, persona, history, insights);
 
   if (saveZipBtn) {
     saveZipBtn.disabled = !history.length;
@@ -252,8 +253,9 @@ function setActiveTab(tab) {
  * @param {string | undefined} personaId
  * @param {import("./types").PersonaRecord | undefined} persona
  * @param {import("./types").HistoryRecord[]} history
+ * @param {import("./types").InsightRecord[]} insights
  */
-function renderExportJson(personaId, persona, history) {
+function renderExportJson(personaId, persona, history, insights) {
   if (!exportJsonEl) {
     return;
   }
@@ -272,7 +274,8 @@ function renderExportJson(personaId, persona, history) {
 
   exportJsonEl.value = buildPersonaJson(
     personaForExport,
-    history.map((entry) => ({ entry }))
+    history.map((entry) => ({ entry })),
+    insights
   );
   exportJsonEl.scrollTop = 0;
 }
@@ -389,7 +392,7 @@ function setupDropImport() {
 async function importPersonaZip(file) {
   try {
     showNotification(`Loading persona from ${file.name}...`);
-    const { persona: importedPersona, history } = await parsePersonaZip(file);
+    const { persona: importedPersona, history, insights = [] } = await parsePersonaZip(file);
     const personas = await listPersonas();
     const targetName = ensureUniqueName(
       importedPersona?.name || "Imported Persona",
@@ -418,6 +421,18 @@ async function importPersonaZip(file) {
           html: item.snapshotHtml,
         });
       }
+    }
+
+    for (const insight of insights) {
+      const { insight_summary, category, intent, score, updated_at, is_deleted } = insight;
+      await addInsight(personaRecord.id, {
+        insight_summary: insight_summary || "",
+        category: category || "",
+        intent: intent || "",
+        score: typeof score === "number" ? score : Number(score) || 1,
+        updated_at: typeof updated_at === "number" ? updated_at : Date.now(),
+        is_deleted: Boolean(is_deleted),
+      });
     }
 
     await setActivePersonaId(personaRecord.id);
@@ -474,6 +489,7 @@ async function handleSaveZip() {
     const personas = await listPersonas();
     const persona = personas.find((p) => p.id === personaId);
     const history = await listHistoryForPersona(personaId);
+    const insights = await listInsightsForPersona(personaId);
 
     const historyWithSnapshots = [];
     for (const entry of history) {
@@ -491,7 +507,8 @@ async function handleSaveZip() {
     };
     const zipBlob = await buildPersonaZip(
       persona || fallbackPersona,
-      historyWithSnapshots
+      historyWithSnapshots,
+      insights
     );
 
     const url = URL.createObjectURL(zipBlob);

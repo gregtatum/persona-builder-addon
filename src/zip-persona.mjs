@@ -46,8 +46,9 @@ export function sanitizeSegment(value) {
  * Build the persona export payload that lands in persona.json.
  * @param {PersonaRecord} persona
  * @param {Array<{ entry: HistoryRecord; html?: string | null }>} historySnapshots
+ * @param {import("./types").InsightRecord[]} [insights]
  */
-export function buildPersonaExport(persona, historySnapshots) {
+export function buildPersonaExport(persona, historySnapshots, insights = []) {
   return {
     persona,
     history: historySnapshots.map(({ entry }) => {
@@ -57,6 +58,10 @@ export function buildPersonaExport(persona, historySnapshots) {
         snapshotPath: `./${buildSnapshotPath(entry.url)}`,
       };
     }),
+    insights: insights.map((insight) => {
+      const { personaId: _omitPersonaId, ...rest } = insight;
+      return rest;
+    }),
   };
 }
 
@@ -64,18 +69,24 @@ export function buildPersonaExport(persona, historySnapshots) {
  * Stringify the persona export payload with pretty formatting.
  * @param {PersonaRecord} persona
  * @param {Array<{ entry: HistoryRecord; html?: string | null }>} historySnapshots
+ * @param {import("./types").InsightRecord[]} [insights]
  */
-export function buildPersonaJson(persona, historySnapshots) {
-  return JSON.stringify(buildPersonaExport(persona, historySnapshots), null, 2);
+export function buildPersonaJson(persona, historySnapshots, insights = []) {
+  return JSON.stringify(
+    buildPersonaExport(persona, historySnapshots, insights),
+    null,
+    2
+  );
 }
 
 /**
  * Build a persona zip archive.
  * @param {PersonaRecord} persona
  * @param {Array<{ entry: HistoryRecord; html?: string | null }>} historySnapshots
+ * @param {import("./types").InsightRecord[]} [insights]
  * @returns {Promise<Blob>}
  */
-export async function buildPersonaZip(persona, historySnapshots) {
+export async function buildPersonaZip(persona, historySnapshots, insights = []) {
   configureZip({ useWebWorkers: false });
   const writer = new ZipWriter(new ZipBlobWriter("application/zip"));
 
@@ -86,7 +97,7 @@ export async function buildPersonaZip(persona, historySnapshots) {
     snapshotEntries.push({ entry, snapshotPath: path, html });
   }
 
-  const personaJson = buildPersonaJson(persona, historySnapshots);
+  const personaJson = buildPersonaJson(persona, historySnapshots, insights);
   await writer.add("persona.json", new ZipBlobReader(new Blob([personaJson], { type: "application/json" })));
 
   for (const { snapshotPath, html } of snapshotEntries) {
@@ -113,6 +124,7 @@ export async function parsePersonaZip(zipBlob) {
   const personaJson = await personaEntry.getData(new ZipTextWriter());
   const parsed = personaJson ? JSON.parse(personaJson) : {};
   const history = Array.isArray(parsed?.history) ? parsed.history : [];
+  const insights = Array.isArray(parsed?.insights) ? parsed.insights : [];
   const persona = parsed?.persona;
 
   /** @type {Array<{ entry: any; snapshotHtml?: string }>} */
@@ -129,5 +141,5 @@ export async function parsePersonaZip(zipBlob) {
   }
 
   await reader.close();
-  return { persona, history: imported };
+  return { persona, history: imported, insights };
 }

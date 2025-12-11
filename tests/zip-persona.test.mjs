@@ -30,12 +30,28 @@ describe("zip-persona roundtrip", () => {
       description: "Nested",
       visitedAt: "2024-01-03T00:00:00.000Z",
     };
+    const insights = [
+      {
+        id: "insight-1",
+        personaId: persona.id,
+        insight_summary: "Summary",
+        category: "Category",
+        intent: "Intent",
+        score: 3,
+        updated_at: 1700000000000,
+        is_deleted: false,
+      },
+    ];
 
     const html = "<html><body><p>snapshot</p></body></html>";
-    const zipBlob = await buildPersonaZip(persona, [
-      { entry: historyEntry, html },
-      { entry: nestedEntry, html: "<p>nested</p>" },
-    ]);
+    const zipBlob = await buildPersonaZip(
+      persona,
+      [
+        { entry: historyEntry, html },
+        { entry: nestedEntry, html: "<p>nested</p>" },
+      ],
+      insights
+    );
 
     const parsed = await parsePersonaZip(zipBlob);
 
@@ -57,6 +73,29 @@ describe("zip-persona roundtrip", () => {
     expect(importedNested.entry.personaId).toBeUndefined();
     expect(importedNested.entry.id).toBeUndefined();
     expect(importedNested.snapshotHtml).toBe("<p>nested</p>");
+    expect(parsed.insights).toEqual([
+      {
+        id: "insight-1",
+        insight_summary: "Summary",
+        category: "Category",
+        intent: "Intent",
+        score: 3,
+        updated_at: 1700000000000,
+        is_deleted: false,
+      },
+    ]);
+    expect(parsed.insights[0].personaId).toBeUndefined();
+    expect(parsed.insights).toEqual([
+      {
+        id: "insight-1",
+        insight_summary: "Summary",
+        category: "Category",
+        intent: "Intent",
+        score: 3,
+        updated_at: 1700000000000,
+        is_deleted: false,
+      },
+    ]);
 
     const tree = await zipTree(zipBlob);
     expect(tree).toBe(
@@ -88,7 +127,20 @@ describe("buildPersonaJson", () => {
       visitedAt: "2024-06-02T00:00:00.000Z",
     };
 
-    const json = buildPersonaJson(persona, [{ entry: historyEntry }]);
+    const insights = [
+      {
+        id: "insight-abc",
+        personaId: persona.id,
+        insight_summary: "Summary",
+        category: "Category",
+        intent: "Intent",
+        score: 2,
+        updated_at: 1700000000000,
+        is_deleted: false,
+      },
+    ];
+
+    const json = buildPersonaJson(persona, [{ entry: historyEntry }], insights);
     const parsed = JSON.parse(json);
 
     expect(parsed.persona).toEqual(persona);
@@ -102,5 +154,16 @@ describe("buildPersonaJson", () => {
     });
     expect(parsed.history[0].personaId).toBeUndefined();
     expect(parsed.history[0].id).toBeUndefined();
+    expect(parsed.insights).toEqual([
+      {
+        id: "insight-abc",
+        insight_summary: "Summary",
+        category: "Category",
+        intent: "Intent",
+        score: 2,
+        updated_at: 1700000000000,
+        is_deleted: false,
+      },
+    ]);
   });
 });
