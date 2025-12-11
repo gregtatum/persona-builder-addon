@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>View Persona</title>
+    <title>Your Personas</title>
     <style>
       :root {
         color-scheme: light;
@@ -183,14 +183,10 @@
   </head>
   <body>
     <div id="drop-overlay" hidden>Drop Persona Zip to import</div>
-    <header>
-      <h1>View Persona</h1>
-      <p class="subtitle">See the active persona and its captured pages.</p>
-    </header>
     <div id="notification" aria-live="polite" aria-atomic="true"></div>
     <section class="card">
       <div class="controls">
-        <label for="persona-select">Active persona</label>
+        <label for="persona-select">Change Persona:</label>
         <select id="persona-select"></select>
         <button id="save-zip-btn" type="button" class="primary-btn">Export</button>
         <button id="delete-persona-btn" type="button" class="delete-btn">Delete</button>
