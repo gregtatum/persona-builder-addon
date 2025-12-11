@@ -47,6 +47,10 @@ export function renderTree(paths) {
   }
 
   const lines = [root.name];
+  /**
+   * @param {TreeNode} node
+   * @param {string} prefix
+   */
   const walk = (node, prefix) => {
     const entries = Array.from(node.children.values()).sort((a, b) =>
       a.name.localeCompare(b.name)

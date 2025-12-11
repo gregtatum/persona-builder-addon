@@ -330,4 +330,19 @@ describe("persona-db", () => {
     const names = (await personaDb.listPersonas()).map((p) => p.name);
     expect(names).toEqual(["First", "Second"]);
   });
+
+  it("renames a persona", async () => {
+    const persona = await personaDb.addPersona("Original Name");
+
+    await expect(
+      personaDb.updatePersonaName(persona.id, "Updated Name")
+    ).resolves.toBeUndefined();
+
+    const personas = await readAllFromStore("personas");
+    expect(personas).toHaveLength(1);
+    expect(personas[0]).toMatchObject({
+      id: persona.id,
+      name: "Updated Name",
+    });
+  });
 });

@@ -132,6 +132,20 @@
         background: #1d4ed8;
         border-color: #1d4ed8;
       }
+      .persona-name-input {
+        font-size: 22px;
+        font-weight: 700;
+        border: 1px solid #9ea2a8;
+        border-radius: 6px;
+        padding: 10px 12px;
+        margin: 0 0 12px;
+        background: #fff;
+        color: #0f172a;
+      }
+      .persona-name-input:disabled {
+        background: #f8fafc;
+        color: #94a3b8;
+      }
       #drop-overlay {
         position: fixed;
         inset: 0;
@@ -181,7 +195,14 @@
         <button id="save-zip-btn" type="button" class="primary-btn">Export</button>
         <button id="delete-persona-btn" type="button" class="delete-btn">Delete</button>
       </div>
-      <h2 id="persona-name">Active persona: loading…</h2>
+      <input
+        id="persona-name-input"
+        class="persona-name-input"
+        type="text"
+        name="persona-name"
+        value="Loading…"
+        aria-label="Persona name"
+      />
       <ul id="history-list" class="history-list"></ul>
       <p id="empty-state" class="empty" hidden>No captures yet.</p>
     </section>

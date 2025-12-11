@@ -17,6 +17,7 @@ import {
   addPersona,
   addHistoryEntry,
   addPageSnapshot,
+  updatePersonaName,
 } from "./persona-db.mjs";
 import {
   buildPersonaZip,
@@ -33,7 +34,9 @@ export function log(message, ...rest) {
   console.log("[persona]", message, ...rest);
 }
 
-const personaNameEl = document.getElementById("persona-name");
+const personaNameInputEl = /** @type {HTMLInputElement | null} */ (
+  document.getElementById("persona-name-input")
+);
 const historyListEl = document.getElementById("history-list");
 const emptyStateEl = document.getElementById("empty-state");
 const personaSelectEl = /** @type {HTMLSelectElement | null} */ (
@@ -72,6 +75,15 @@ async function load() {
       "click",
       () => void handleDeletePersona()
     );
+  }
+
+  if (personaNameInputEl) {
+    personaNameInputEl.addEventListener("change", () => {
+      void handleRenamePersona();
+    });
+    personaNameInputEl.addEventListener("blur", () => {
+      void handleRenamePersona();
+    });
   }
 
   setupDropImport();
@@ -119,14 +131,17 @@ function renderPersonaOptions(personas) {
  */
 async function renderPersonaAndHistory(personaId) {
   if (!personaId) {
-    renderPersonaName("No active persona");
+    renderPersonaName("", { disabled: true, placeholder: "No active persona" });
     renderHistory([]);
     return;
   }
 
   const personas = await listPersonas();
   const persona = personas.find((p) => p.id === personaId);
-  renderPersonaName(persona ? persona.name : "Unknown persona");
+  renderPersonaName(persona ? persona.name : "Unknown persona", {
+    disabled: !persona,
+    placeholder: "Persona name",
+  });
 
   const history = await listHistoryForPersona(personaId);
   renderHistory(history);
@@ -145,11 +160,16 @@ async function renderPersonaAndHistory(personaId) {
 
 /**
  * @param {string} name
+ * @param {{ disabled?: boolean; placeholder?: string }} [options]
  */
-function renderPersonaName(name) {
-  if (personaNameEl) {
-    personaNameEl.textContent = `Active persona: ${name}`;
+function renderPersonaName(name, options = {}) {
+  if (!personaNameInputEl) {
+    return;
   }
+  const { disabled = false, placeholder = "" } = options;
+  personaNameInputEl.disabled = disabled;
+  personaNameInputEl.placeholder = placeholder;
+  personaNameInputEl.value = name;
 }
 
 /**
@@ -260,6 +280,45 @@ function renderEmpty(isEmpty) {
   emptyStateEl.hidden = !isEmpty;
 }
 
+async function handleRenamePersona() {
+  if (!personaNameInputEl) {
+    return;
+  }
+  try {
+    const personaId = await getActivePersonaId();
+    if (!personaId) {
+      renderPersonaName("", { disabled: true, placeholder: "No active persona" });
+      return;
+    }
+
+    const newName = personaNameInputEl.value.trim();
+    const personas = await listPersonas();
+    const current = personas.find((p) => p.id === personaId);
+    if (!current) {
+      renderPersonaName("Unknown persona", { disabled: true });
+      return;
+    }
+    if (!newName) {
+      renderPersonaName(current.name, { disabled: false, placeholder: "Persona name" });
+      return;
+    }
+    if (current.name === newName) {
+      return;
+    }
+
+    await updatePersonaName(personaId, newName);
+    const updatedPersonas = await listPersonas();
+    renderPersonaOptions(updatedPersonas);
+    if (personaSelectEl) {
+      personaSelectEl.value = personaId;
+    }
+    renderPersonaName(newName, { disabled: false, placeholder: "Persona name" });
+    showNotification(`Renamed to ${newName}`);
+  } catch (error) {
+    log("Failed to rename persona", error);
+  }
+}
+
 async function handleDeletePersona() {
   try {
     const personaId = await getActivePersonaId();
@@ -274,6 +333,7 @@ async function handleDeletePersona() {
     }
     await deletePersona(personaId);
     const remaining = await listPersonas();
+    renderPersonaOptions(remaining);
     const newActive = remaining[0]?.id;
     await setActivePersonaId(newActive || "");
     await renderPersonaAndHistory(newActive);
@@ -330,6 +390,8 @@ async function importPersonaZip(file) {
       personas
     );
     const personaRecord = await addPersona(targetName);
+    const updatedPersonas = await listPersonas();
+    renderPersonaOptions(updatedPersonas);
 
     for (const item of history) {
       /** @type {import("./types").HistoryInput} */

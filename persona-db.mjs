@@ -139,6 +139,31 @@ export async function listPersonas() {
 }
 
 /**
+ * Update a persona's name.
+ * @param {string} personaId
+ * @param {string} name
+ * @returns {Promise<void>}
+ */
+export async function updatePersonaName(personaId, name) {
+  const tx = await transaction("readwrite", ["personas"]);
+  const store = tx.objectStore("personas");
+  const persona = await /** @type {Promise<import("./types").PersonaRecord | undefined>} */ (
+    new Promise((resolve, reject) => {
+      const req = store.get(personaId);
+      req.onerror = () => reject(req.error || new Error("get persona failed"));
+      req.onsuccess = () => resolve(/** @type {import("./types").PersonaRecord | undefined} */ (req.result));
+    })
+  );
+  if (!persona) {
+    tx.commit?.();
+    throw new Error(`Persona ${personaId} not found`);
+  }
+  persona.name = name;
+  await put(store, persona);
+  tx.commit?.();
+}
+
+/**
  * List history entries for a persona, sorted by visitedAt descending.
  * @param {string} personaId
  * @returns {Promise<HistoryRecord[]>}
