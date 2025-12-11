@@ -4,19 +4,22 @@
  */
 
 /**
+ * @typedef {object} HistoryProps
+ * @property {(historyId: string) => Promise<{ html?: string } | undefined>} getSnapshot
+ * @property {(entry: HistoryRecord) => Promise<void>} onDeleteHistory
+ * @property {(...args: any[]) => void} log
+ */
+
+const historyListEl = document.getElementById("history-list");
+const emptyStateEl = document.getElementById("empty-state");
+
+/**
  * Render the history tab contents.
  * @param {HistoryRecord[]} history
- * @param {{
- *  historyListEl: HTMLElement | null;
- *  emptyStateEl: HTMLElement | null;
- *  getSnapshot: (historyId: string) => Promise<{ html?: string } | undefined>;
- *  onDeleteHistory: (entry: HistoryRecord) => Promise<void>;
- *  log: (...args: any[]) => void;
- * }} deps
+ * @param {HistoryProps} props
  */
-export function renderHistoryTab(history, deps) {
-  const { historyListEl, emptyStateEl, getSnapshot, onDeleteHistory, log } =
-    deps;
+export function renderHistoryTab(history, props) {
+  const { getSnapshot, onDeleteHistory, log } = props;
   if (!historyListEl || !emptyStateEl) {
     return;
   }

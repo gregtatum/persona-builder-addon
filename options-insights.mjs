@@ -2,22 +2,43 @@
 
 import { CATEGORIES_LIST, INTENTS_LIST } from "./insights-constants.mjs";
 
+
 /**
  * Render the insights tab contents.
  * @param {string | undefined} personaId
- * @param {InsightDeps} deps
+ * @param {InsightProps} props
  */
-export async function renderInsights(personaId, deps) {
+const insightsRowsEl = document.getElementById("insights-rows");
+const insightsEmptyEl = document.getElementById("insights-empty");
+const insightAddSummary = /** @type {HTMLInputElement | null} */ (
+  document.getElementById("insight-add-summary")
+);
+const insightAddCategory = /** @type {HTMLSelectElement | null} */ (
+  document.getElementById("insight-add-category")
+);
+const insightAddIntent = /** @type {HTMLSelectElement | null} */ (
+  document.getElementById("insight-add-intent")
+);
+const insightAddScore = /** @type {HTMLSelectElement | null} */ (
+  document.getElementById("insight-add-score")
+);
+const insightAddBtn = /** @type {HTMLButtonElement | null} */ (
+  document.getElementById("insight-add-btn")
+);
+
+/**
+ * @param {string | undefined} personaId
+ * @param {InsightProps} props
+ */
+export async function renderInsights(personaId, props) {
   const {
-    insightsRowsEl,
-    insightsEmptyEl,
     listInsightsForPersona,
     log,
     updateInsight,
     deleteInsight,
     addInsight,
     showNotification,
-  } = deps;
+  } = props;
 
   if (!insightsRowsEl || !insightsEmptyEl) {
     return;
@@ -28,6 +49,7 @@ export async function renderInsights(personaId, deps) {
     return;
   }
 
+  /** @type {import("./types").InsightRecord[]} */
   const insights = await listInsightsForPersona(personaId);
   insightsEmptyEl.hidden = insights.length > 0;
   insights.forEach((insight, index) => {
@@ -35,14 +57,14 @@ export async function renderInsights(personaId, deps) {
       insight,
       personaId,
       isPlaceholder: false,
-      deps: {
+      props: {
         addInsight,
         updateInsight,
         deleteInsight,
         log,
         showNotification,
         renderInsights: (targetPersonaId) =>
-          renderInsights(targetPersonaId, deps),
+          renderInsights(targetPersonaId, props),
       },
     });
     rowEl.dataset.index = String(index);
@@ -52,16 +74,9 @@ export async function renderInsights(personaId, deps) {
 
 /**
  * Wire up the add-insight form.
- * @param {InsightDeps & { getActivePersonaId: () => Promise<string | undefined> }} deps
+ * @param {InsightProps & { getActivePersonaId: () => Promise<string | undefined> }} props
  */
-export function setupInsightAddForm(deps) {
-  const {
-    insightAddSummary,
-    insightAddCategory,
-    insightAddIntent,
-    insightAddScore,
-    insightAddBtn,
-  } = deps;
+export function setupInsightAddForm(props) {
   if (
     !insightAddSummary ||
     !insightAddCategory ||
@@ -76,12 +91,12 @@ export function setupInsightAddForm(deps) {
   populateSelect(insightAddScore, ["1", "2", "3", "4", "5"], "");
 
   insightAddBtn?.addEventListener("click", () => {
-    void handleAddInsight(deps);
+    void handleAddInsight(props);
   });
   insightAddSummary.addEventListener("keydown", (event) => {
     if (event.key === "Enter") {
       event.preventDefault();
-      void handleAddInsight(deps);
+      void handleAddInsight(props);
     }
   });
 }
@@ -109,18 +124,10 @@ function populateSelect(select, values, placeholder) {
 }
 
 /**
- * @param {InsightDeps & { getActivePersonaId: () => Promise<string | undefined> }} deps
+ * @param {InsightProps & { getActivePersonaId: () => Promise<string | undefined> }} props
  */
-async function handleAddInsight(deps) {
-  const {
-    insightAddSummary,
-    insightAddCategory,
-    insightAddIntent,
-    insightAddScore,
-    getActivePersonaId,
-    addInsight,
-    showNotification,
-  } = deps;
+async function handleAddInsight(props) {
+  const { getActivePersonaId, addInsight, showNotification } = props;
   if (
     !insightAddSummary ||
     !insightAddCategory ||
@@ -160,9 +167,9 @@ async function handleAddInsight(deps) {
     populateSelect(insightAddScore, ["1", "2", "3", "4", "5"], "");
     insightAddSummary.focus();
     showNotification("Insight added");
-    await renderInsights(personaId, deps);
+    await renderInsights(personaId, props);
   } catch (error) {
-    deps.log("Failed to add insight", error);
+    props.log("Failed to add insight", error);
     showNotification("Save failed");
   }
 }
@@ -172,7 +179,7 @@ async function handleAddInsight(deps) {
  *  insight: import("./types").InsightRecord;
  *  personaId: string;
  *  isPlaceholder: boolean;
- *  deps: {
+ *  props: {
  *    addInsight: typeof import("./persona-db.mjs").addInsight;
  *    updateInsight: typeof import("./persona-db.mjs").updateInsight;
  *    deleteInsight: typeof import("./persona-db.mjs").deleteInsight;
@@ -182,8 +189,9 @@ async function handleAddInsight(deps) {
  *  };
  * }} params
  */
-function buildInsightRow({ insight, personaId, isPlaceholder, deps }) {
-  const { addInsight, updateInsight, deleteInsight, renderInsights, log } = deps;
+function buildInsightRow({ insight, personaId, isPlaceholder, props }) {
+  const { addInsight, updateInsight, deleteInsight, renderInsights, log } =
+    props;
 
   const row = document.createElement("div");
   row.className = "insight-row";
@@ -219,7 +227,13 @@ function buildInsightRow({ insight, personaId, isPlaceholder, deps }) {
         elements: { summaryInput, categorySelect, intentSelect, scoreSelect },
         isPlaceholder,
         row,
-        deps: { addInsight, updateInsight, renderInsights, showNotification: deps.showNotification, log },
+        props: {
+          addInsight,
+          updateInsight,
+          renderInsights,
+          showNotification: props.showNotification,
+          log,
+        },
       });
     });
     el.addEventListener("blur", () => {
@@ -229,7 +243,13 @@ function buildInsightRow({ insight, personaId, isPlaceholder, deps }) {
         elements: { summaryInput, categorySelect, intentSelect, scoreSelect },
         isPlaceholder,
         row,
-        deps: { addInsight, updateInsight, renderInsights, showNotification: deps.showNotification, log },
+        props: {
+          addInsight,
+          updateInsight,
+          renderInsights,
+          showNotification: props.showNotification,
+          log,
+        },
       });
     });
   };
@@ -251,7 +271,7 @@ function buildInsightRow({ insight, personaId, isPlaceholder, deps }) {
         insightId: insight.id,
         deleteInsight,
         renderInsights,
-        showNotification: deps.showNotification,
+        showNotification: props.showNotification,
         log,
       });
     });
@@ -304,7 +324,7 @@ async function handleInsightDelete({
  *  };
  *  isPlaceholder: boolean;
  *  row: HTMLElement;
- *  deps: {
+ *  props: {
  *    addInsight: typeof import("./persona-db.mjs").addInsight;
  *    updateInsight: typeof import("./persona-db.mjs").updateInsight;
  *    renderInsights: (personaId: string) => Promise<void>;
@@ -319,7 +339,7 @@ async function handleInsightSave({
   elements,
   isPlaceholder,
   row,
-  deps,
+  props,
 }) {
   const statusEl = row.querySelector(".insight-status");
   const summary = elements.summaryInput.value.trim();
@@ -342,7 +362,7 @@ async function handleInsightSave({
   if (statusEl) statusEl.textContent = "Saving…";
   try {
     if (isPlaceholder) {
-      await deps.addInsight(personaId, {
+      await props.addInsight(personaId, {
         insight_summary: summary,
         category,
         intent,
@@ -351,7 +371,7 @@ async function handleInsightSave({
         updated_at: Date.now(),
       });
     } else {
-      await deps.updateInsight(insightId, {
+      await props.updateInsight(insightId, {
         insight_summary: summary,
         category,
         intent,
@@ -361,23 +381,16 @@ async function handleInsightSave({
       });
     }
     if (statusEl) statusEl.textContent = "Saved";
-    await deps.renderInsights(personaId);
+    await props.renderInsights(personaId);
   } catch (error) {
-    deps.log("Failed to save insight", error);
+    props.log("Failed to save insight", error);
     if (statusEl) statusEl.textContent = "Save failed";
-    deps.showNotification("Save failed");
+    props.showNotification("Save failed");
   }
 }
 
 /**
- * @typedef {object} InsightDeps
- * @property {HTMLElement | null} insightsRowsEl
- * @property {HTMLElement | null} insightsEmptyEl
- * @property {HTMLInputElement | null} insightAddSummary
- * @property {HTMLSelectElement | null} insightAddCategory
- * @property {HTMLSelectElement | null} insightAddIntent
- * @property {HTMLSelectElement | null} insightAddScore
- * @property {HTMLButtonElement | null} insightAddBtn
+ * @typedef {object} InsightProps
  * @property {(personaId: string) => Promise<import("./types").InsightRecord[]>} listInsightsForPersona
  * @property {typeof import("./persona-db.mjs").addInsight} addInsight
  * @property {typeof import("./persona-db.mjs").updateInsight} updateInsight

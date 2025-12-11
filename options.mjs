@@ -45,10 +45,6 @@ export function log(message, ...rest) {
 const personaNameInputEl = /** @type {HTMLInputElement | null} */ (
   document.getElementById("persona-name-input")
 );
-const historyListEl = document.getElementById("history-list");
-const emptyStateEl = document.getElementById("empty-state");
-const insightsRowsEl = document.getElementById("insights-rows");
-const insightsEmptyEl = document.getElementById("insights-empty");
 const personaSelectEl = /** @type {HTMLSelectElement | null} */ (
   document.getElementById("persona-select")
 );
@@ -66,27 +62,10 @@ const insightsTabBtn = /** @type {HTMLButtonElement | null} */ (
 );
 const historyPanel = document.getElementById("panel-history");
 const insightsPanel = document.getElementById("panel-insights");
-const insightAddSummary = /** @type {HTMLInputElement | null} */ (
-  document.getElementById("insight-add-summary")
-);
-const insightAddCategory = /** @type {HTMLSelectElement | null} */ (
-  document.getElementById("insight-add-category")
-);
-const insightAddIntent = /** @type {HTMLSelectElement | null} */ (
-  document.getElementById("insight-add-intent")
-);
-const insightAddScore = /** @type {HTMLSelectElement | null} */ (
-  document.getElementById("insight-add-score")
-);
-const insightAddBtn = /** @type {HTMLButtonElement | null} */ (
-  document.getElementById("insight-add-btn")
-);
 const dropOverlay = document.getElementById("drop-overlay");
 const notificationEl = document.getElementById("notification");
 
-const historyDeps = {
-  historyListEl,
-  emptyStateEl,
+const historyProps = {
   getSnapshot: getPageSnapshot,
   /** @param {import("./types").HistoryRecord} entry */
   onDeleteHistory: async (entry) => {
@@ -96,14 +75,7 @@ const historyDeps = {
   log,
 };
 
-const insightsDeps = {
-  insightsRowsEl,
-  insightsEmptyEl,
-  insightAddSummary,
-  insightAddCategory,
-  insightAddIntent,
-  insightAddScore,
-  insightAddBtn,
+const insightsProps = {
   listInsightsForPersona,
   addInsight,
   updateInsight,
@@ -165,7 +137,7 @@ async function load() {
     await renderPersonaAndHistory(current);
   };
 
-  setupInsightAddForm(insightsDeps);
+  setupInsightAddForm(insightsProps);
 
   setActiveTab("history");
 
@@ -201,8 +173,8 @@ function renderPersonaOptions(personas) {
 async function renderPersonaAndHistory(personaId) {
   if (!personaId) {
     renderPersonaName("", { disabled: true, placeholder: "No active persona" });
-    renderHistoryTab([], historyDeps);
-    await renderInsights(undefined, insightsDeps);
+    renderHistoryTab([], historyProps);
+    await renderInsights(undefined, insightsProps);
     return;
   }
 
@@ -214,8 +186,8 @@ async function renderPersonaAndHistory(personaId) {
   });
 
   const history = await listHistoryForPersona(personaId);
-  renderHistoryTab(history, historyDeps);
-  await renderInsights(personaId, insightsDeps);
+  renderHistoryTab(history, historyProps);
+  await renderInsights(personaId, insightsProps);
 
   if (saveZipBtn) {
     saveZipBtn.disabled = !history.length;
