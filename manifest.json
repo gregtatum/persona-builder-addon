@@ -10,13 +10,13 @@
   },
   "permissions": ["activeTab", "storage", "<all_urls>"],
   "background": {
-    "scripts": ["background.js"],
+    "scripts": ["src/background.js"],
     "persistent": false,
     "type": "module"
   },
   "browser_action": {
     "default_title": "Persona Builder",
-    "default_popup": "popup.html",
+    "default_popup": "src/popup.html",
     "default_icon": {
       "19": "assets/icons/person-dark-19.png",
       "38": "assets/icons/person-dark-38.png"
@@ -25,7 +25,7 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["content.js"],
+      "js": ["src/content.js"],
       "run_at": "document_idle"
     }
   ],
@@ -39,12 +39,12 @@
     }
   },
   "options_ui": {
-    "page": "options.html",
+    "page": "src/options.html",
     "open_in_tab": true
   },
   "web_accessible_resources": [
-    "content.mjs",
-    "options.css",
+    "src/content.mjs",
+    "src/options.css",
     "vendor/singlefile/single-file.js"
   ]
 }

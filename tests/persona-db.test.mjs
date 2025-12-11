@@ -1,5 +1,5 @@
 import { indexedDB, IDBKeyRange } from "fake-indexeddb";
-import * as personaDb from "../persona-db.mjs";
+import * as personaDb from "../src/persona-db.mjs";
 
 globalThis.indexedDB = indexedDB;
 globalThis.IDBKeyRange = IDBKeyRange;
@@ -186,7 +186,7 @@ describe("persona-db", () => {
       IDBKeyRange.only(persona.id)
     );
     const typedSnapshots =
-      /** @type {import("../types").PageSnapshotRecord[]} */ (snapshots);
+      /** @type {import("../src/types").PageSnapshotRecord[]} */ (snapshots);
     expect(typedSnapshots).toHaveLength(1);
     expect(typedSnapshots[0]).toMatchObject({
       historyId: history.id,
@@ -248,7 +248,7 @@ describe("persona-db", () => {
     expect(provided.id).toBe("given-id");
 
     const insights = await readAllFromStore("insights");
-    const typedInsights = /** @type {import("../types").InsightRecord[]} */ (
+    const typedInsights = /** @type {import("../src/types").InsightRecord[]} */ (
       insights
     );
     expect(typedInsights).toHaveLength(2);

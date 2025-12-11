@@ -2,7 +2,7 @@ import {
   buildPersonaZip,
   parsePersonaZip,
   buildSnapshotPath,
-} from "../zip-persona.mjs";
+} from "../src/zip-persona.mjs";
 import { zipTree } from "./helpers/zip-tree.mjs";
 
 describe("zip-persona roundtrip", () => {

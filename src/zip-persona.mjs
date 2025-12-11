@@ -6,7 +6,7 @@ import {
   ZipWriter,
   ZipReader,
   configure as configureZip,
-} from "./vendor/zipjs/index.js";
+} from "../vendor/zipjs/index.js";
 
 /** @typedef {import("./types").PersonaRecord} PersonaRecord */
 /** @typedef {import("./types").HistoryRecord} HistoryRecord */

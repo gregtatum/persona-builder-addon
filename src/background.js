@@ -9,7 +9,7 @@ import {
   BlobReader as ZipBlobReader,
   ZipReader,
   configure as configureZip,
-} from "./vendor/zipjs/index.js";
+} from "../vendor/zipjs/index.js";
 
 /**
  * @param {any} message
