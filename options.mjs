@@ -359,34 +359,16 @@ function buildInsightRow(insight, personaId, isPlaceholder) {
   summaryInput.value = insight.insight_summary || "";
 
   const categorySelect = document.createElement("select");
-  categorySelect.innerHTML = `<option value="">Select category</option>`;
-  CATEGORIES_LIST.forEach((cat) => {
-    const option = document.createElement("option");
-    option.value = cat;
-    option.textContent = cat;
-    categorySelect.appendChild(option);
-  });
-  categorySelect.value = insight.category || "";
+  populateSelect(categorySelect, CATEGORIES_LIST, "");
+  categorySelect.value = insight.category || categorySelect.value;
 
   const intentSelect = document.createElement("select");
-  intentSelect.innerHTML = `<option value="">Select intent</option>`;
-  INTENTS_LIST.forEach((intent) => {
-    const option = document.createElement("option");
-    option.value = intent;
-    option.textContent = intent;
-    intentSelect.appendChild(option);
-  });
-  intentSelect.value = insight.intent || "";
+  populateSelect(intentSelect, INTENTS_LIST, "");
+  intentSelect.value = insight.intent || intentSelect.value;
 
   const scoreSelect = document.createElement("select");
-  scoreSelect.innerHTML = `<option value="">Score</option>`;
-  for (let i = 1; i <= 5; i += 1) {
-    const opt = document.createElement("option");
-    opt.value = String(i);
-    opt.textContent = String(i);
-    scoreSelect.appendChild(opt);
-  }
-  scoreSelect.value = insight.score ? String(insight.score) : "";
+  populateSelect(scoreSelect, ["1", "2", "3", "4", "5"], "");
+  scoreSelect.value = insight.score ? String(insight.score) : scoreSelect.value;
 
   /**
    * @param {HTMLElement} el
@@ -446,8 +428,9 @@ function setupInsightAddForm() {
   ) {
     return;
   }
-  populateSelect(insightAddCategory, CATEGORIES_LIST, "Select category");
-  populateSelect(insightAddIntent, INTENTS_LIST, "Select intent");
+  populateSelect(insightAddCategory, CATEGORIES_LIST, "");
+  populateSelect(insightAddIntent, INTENTS_LIST, "");
+  populateSelect(insightAddScore, ["1", "2", "3", "4", "5"], "");
 
   insightAddBtn?.addEventListener("click", () => {
     void handleAddInsight();
@@ -466,13 +449,20 @@ function setupInsightAddForm() {
  * @param {string} placeholder
  */
 function populateSelect(select, values, placeholder) {
-  select.innerHTML = `<option value="">${placeholder}</option>`;
+  if (placeholder !== undefined) {
+    select.innerHTML = `<option value="">${placeholder}</option>`;
+  } else {
+    select.innerHTML = "";
+  }
   values.forEach((value) => {
     const option = document.createElement("option");
     option.value = value;
     option.textContent = value;
     select.appendChild(option);
   });
+  if (!placeholder && values.length > 0) {
+    select.value = values[0];
+  }
 }
 
 async function handleAddInsight() {
@@ -491,9 +481,9 @@ async function handleAddInsight() {
     return;
   }
   const summary = insightAddSummary.value.trim();
-  const category = insightAddCategory.value;
-  const intent = insightAddIntent.value;
-  const scoreValue = insightAddScore.value;
+  const category = insightAddCategory.value || CATEGORIES_LIST[0];
+  const intent = insightAddIntent.value || INTENTS_LIST[0];
+  const scoreValue = insightAddScore.value || "1";
   const score = Number(scoreValue);
 
   if (!summary || !category || !intent || !scoreValue) {
@@ -512,9 +502,9 @@ async function handleAddInsight() {
       updated_at: Date.now(),
     });
     insightAddSummary.value = "";
-    insightAddCategory.value = "";
-    insightAddIntent.value = "";
-    insightAddScore.value = "";
+    populateSelect(insightAddCategory, CATEGORIES_LIST, "");
+    populateSelect(insightAddIntent, INTENTS_LIST, "");
+    populateSelect(insightAddScore, ["1", "2", "3", "4", "5"], "");
     insightAddSummary.focus();
     if (statusEl) statusEl.textContent = "Saved";
     await renderInsights(personaId);
