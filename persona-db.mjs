@@ -370,6 +370,23 @@ export async function updateInsight(insightId, updates) {
 }
 
 /**
+ * Permanently delete an insight.
+ * @param {string} insightId
+ * @returns {Promise<void>}
+ */
+export async function deleteInsight(insightId) {
+  const tx = await transaction("readwrite", ["insights"]);
+  await /** @type {Promise<void>} */ (
+    new Promise((resolve, reject) => {
+      const req = tx.objectStore("insights").delete(insightId);
+      req.onerror = () => reject(req.error || new Error("delete insight failed"));
+      req.onsuccess = () => resolve();
+    })
+  );
+  tx.commit?.();
+}
+
+/**
  * List insights for a persona ordered by updated_at descending.
  * @param {string} personaId
  * @returns {Promise<import("./types").InsightRecord[]>}
@@ -382,9 +399,7 @@ export async function listInsightsForPersona(personaId) {
     IDBKeyRange.only(personaId)
   );
   tx.commit?.();
-  return results
-    .filter((insight) => !insight.is_deleted)
-    .sort((a, b) => (b.updated_at || 0) - (a.updated_at || 0));
+  return results.sort((a, b) => (b.updated_at || 0) - (a.updated_at || 0));
 }
 
 /**

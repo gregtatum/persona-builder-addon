@@ -21,6 +21,7 @@ import {
   addInsight,
   listInsightsForPersona,
   updateInsight,
+  deleteInsight,
 } from "./persona-db.mjs";
 import {
   buildPersonaZip,
@@ -520,10 +521,7 @@ async function handleAddInsight() {
  */
 async function handleInsightDelete(personaId, insightId) {
   try {
-    await updateInsight(insightId, {
-      is_deleted: true,
-      updated_at: Date.now(),
-    });
+    await deleteInsight(insightId);
     await renderInsights(personaId);
   } catch (error) {
     log("Failed to delete insight", error);

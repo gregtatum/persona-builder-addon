@@ -284,6 +284,23 @@ describe("persona-db", () => {
     expect(all[0].insight_summary).toBe("Updated summary");
   });
 
+  it("deletes an insight", async () => {
+    const persona = await personaDb.addPersona("Insight Delete Persona");
+    const insight = await personaDb.addInsight(persona.id, {
+      insight_summary: "To remove",
+      category: "News",
+      intent: "Research / Learn",
+      score: 2,
+      updated_at: 1700000000000,
+      is_deleted: false,
+    });
+
+    await personaDb.deleteInsight(insight.id);
+
+    const insights = await readAllFromStore("insights");
+    expect(insights).toHaveLength(0);
+  });
+
   it("deletes history entries and snapshots", async () => {
     const persona = await personaDb.addPersona("Delete Persona");
     const entry = await personaDb.addHistoryEntry({
