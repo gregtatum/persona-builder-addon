@@ -68,7 +68,10 @@ async function load() {
   }
 
   if (deletePersonaBtn) {
-    deletePersonaBtn.addEventListener("click", () => void handleDeletePersona());
+    deletePersonaBtn.addEventListener(
+      "click",
+      () => void handleDeletePersona()
+    );
   }
 
   setupDropImport();
@@ -322,7 +325,10 @@ async function importPersonaZip(file) {
     showNotification(`Loading persona from ${file.name}...`);
     const { persona: importedPersona, history } = await parsePersonaZip(file);
     const personas = await listPersonas();
-    const targetName = ensureUniqueName(importedPersona?.name || "Imported Persona", personas);
+    const targetName = ensureUniqueName(
+      importedPersona?.name || "Imported Persona",
+      personas
+    );
     const personaRecord = await addPersona(targetName);
 
     for (const item of history) {
@@ -341,7 +347,7 @@ async function importPersonaZip(file) {
           personaId: personaRecord.id,
           url: savedHistory.url,
           capturedAt: item.entry.capturedAt || savedHistory.visitedAt,
-          html: item.snapshotHtml
+          html: item.snapshotHtml,
         });
       }
     }
@@ -415,25 +421,25 @@ async function handleSaveZip() {
       name: personaId,
       createdAt: new Date().toISOString(),
     };
-    const zipBlob = await buildPersonaZip(persona || fallbackPersona, historyWithSnapshots);
+    const zipBlob = await buildPersonaZip(
+      persona || fallbackPersona,
+      historyWithSnapshots
+    );
 
     const url = URL.createObjectURL(zipBlob);
-    const personaSlug = sanitizeSegment(persona?.name || personaId || "persona");
+    const personaSlug = sanitizeSegment(
+      persona?.name || personaId || "persona"
+    );
     const a = document.createElement("a");
     a.href = url;
     a.download = `Persona-${personaSlug || "persona"}.zip`;
     a.click();
     URL.revokeObjectURL(url);
-    saveZipBtn.textContent = "Saved!";
-    setTimeout(() => {
-      if (saveZipBtn) {
-        saveZipBtn.textContent = "Save to Zip";
-        saveZipBtn.disabled = false;
-      }
-    }, 1200);
+    saveZipBtn.textContent = "Export";
+    saveZipBtn.disabled = false;
   } catch (error) {
     log("Failed to save persona zip", error);
-    saveZipBtn.textContent = "Save to Zip";
+    saveZipBtn.textContent = "Export";
     saveZipBtn.disabled = false;
   }
 }

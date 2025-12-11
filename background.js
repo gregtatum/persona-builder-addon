@@ -38,7 +38,6 @@ async function initActivePersona() {
 }
 
 void initActivePersona();
-void verifyZipJsAvailable();
 
 browser.runtime.onInstalled.addListener(() => {
   log("Persona Builder stub installed");
@@ -147,22 +146,4 @@ async function handleCaptureSnapshotRequest(message) {
     return;
   }
   await capturePageSnapshot(tabId, history);
-}
-
-async function verifyZipJsAvailable() {
-  configureZip({ useWebWorkers: false });
-  const hasConstructors =
-    typeof ZipBlobReader === "function" && typeof ZipReader === "function";
-  log("zip.js initialized", { hasConstructors });
-  if (!hasConstructors) {
-    return;
-  }
-  try {
-    /** @type {import("./vendor/zipjs/index.js").ZipReader<Blob>} */
-    const reader = new ZipReader(new ZipBlobReader(new Blob([])));
-    await reader.close();
-    log("zip.js smoke test succeeded");
-  } catch (error) {
-    log("zip.js smoke test failed", error);
-  }
 }
