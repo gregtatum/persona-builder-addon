@@ -1,3 +1,5 @@
+export { Persona, PersonaDetails, PersonaHistory, PersonaInsights } from "./persona";
+
 export interface PersonaRecord {
   id: string;
   name: string;
