@@ -60,6 +60,13 @@ npx web-ext sign \
   --api-key "$AMO_JWT_ISSUER" \
   --api-secret "$AMO_JWT_SECRET" \
   --config ./.web-ext-config.mjs
+SIGNED_ARTIFACT="$(ls -t "$ROOT_DIR"/dist/*.xpi 2>/dev/null | head -n 1 || true)"
+if [[ -n "$SIGNED_ARTIFACT" ]]; then
+  TARGET_XPI="$ROOT_DIR/dist/persona_builder-${PKG_VERSION}.xpi"
+  if [[ "$SIGNED_ARTIFACT" != "$TARGET_XPI" ]]; then
+    mv -f "$SIGNED_ARTIFACT" "$TARGET_XPI"
+  fi
+fi
 
 ARTIFACT="$(ls -t "$ROOT_DIR"/dist/*.{xpi,zip} 2>/dev/null | head -n 1 || true)"
 if [[ -z "$ARTIFACT" ]]; then
@@ -68,7 +75,7 @@ if [[ -z "$ARTIFACT" ]]; then
 fi
 
 echo "Committing version bump..."
-git add package.json package-lock.json
+git add package.json package-lock.json manifest.json
 git commit -m "Release $TAG"
 
 echo "Creating git tag $TAG..."
