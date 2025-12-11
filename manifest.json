@@ -22,6 +22,12 @@
       "38": "assets/icons/person-dark-38.png"
     }
   },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "{9aa8897e-56b8-4c24-a778-deb989d97c63}",
+      "strict_min_version": "109.0"
+    }
+  },
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
