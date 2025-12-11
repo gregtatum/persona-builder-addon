@@ -43,6 +43,30 @@ export function sanitizeSegment(value) {
 }
 
 /**
+ * Build the persona export payload that lands in persona.json.
+ * @param {PersonaRecord} persona
+ * @param {Array<{ entry: HistoryRecord; html?: string | null }>} historySnapshots
+ */
+export function buildPersonaExport(persona, historySnapshots) {
+  return {
+    persona,
+    history: historySnapshots.map(({ entry }) => ({
+      ...entry,
+      snapshotPath: `./${buildSnapshotPath(entry.url)}`,
+    })),
+  };
+}
+
+/**
+ * Stringify the persona export payload with pretty formatting.
+ * @param {PersonaRecord} persona
+ * @param {Array<{ entry: HistoryRecord; html?: string | null }>} historySnapshots
+ */
+export function buildPersonaJson(persona, historySnapshots) {
+  return JSON.stringify(buildPersonaExport(persona, historySnapshots), null, 2);
+}
+
+/**
  * Build a persona zip archive.
  * @param {PersonaRecord} persona
  * @param {Array<{ entry: HistoryRecord; html?: string | null }>} historySnapshots
@@ -59,15 +83,7 @@ export async function buildPersonaZip(persona, historySnapshots) {
     snapshotEntries.push({ entry, snapshotPath: path, html });
   }
 
-  const personaData = {
-    persona,
-    history: historySnapshots.map(({ entry }) => ({
-      ...entry,
-      snapshotPath: `./${buildSnapshotPath(entry.url)}`,
-    })),
-  };
-
-  const personaJson = JSON.stringify(personaData, null, 2);
+  const personaJson = buildPersonaJson(persona, historySnapshots);
   await writer.add("persona.json", new ZipBlobReader(new Blob([personaJson], { type: "application/json" })));
 
   for (const { snapshotPath, html } of snapshotEntries) {

@@ -261,3 +261,25 @@ select {
   opacity: 1;
   transform: translateY(0);
 }
+.export-help {
+  color: #475569;
+  margin: 0 0 8px;
+}
+.export-json {
+  width: 100%;
+  min-height: calc(100vh - 300px);
+  padding: 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: #0f172a;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+  font-size: 13px;
+  resize: vertical;
+  box-sizing: border-box;
+}
+.export-json:focus {
+  outline: 2px solid #2563eb;
+  border-color: #2563eb;
+}

@@ -2,6 +2,7 @@ import {
   buildPersonaZip,
   parsePersonaZip,
   buildSnapshotPath,
+  buildPersonaJson,
 } from "../src/zip-persona.mjs";
 import { zipTree } from "./helpers/zip-tree.mjs";
 
@@ -64,5 +65,33 @@ describe("zip-persona roundtrip", () => {
         "        └── path_page.html",
       ].join("\n")
     );
+  });
+});
+
+describe("buildPersonaJson", () => {
+  it("matches the structure of persona.json used in the zip", () => {
+    const persona = {
+      id: "persona-123",
+      name: "Json Persona",
+      createdAt: "2024-06-01T12:00:00.000Z",
+    };
+    const historyEntry = {
+      id: "history-abc",
+      personaId: persona.id,
+      url: "https://example.com/path",
+      title: "Some page",
+      description: "Desc",
+      visitedAt: "2024-06-02T00:00:00.000Z",
+    };
+
+    const json = buildPersonaJson(persona, [{ entry: historyEntry }]);
+    const parsed = JSON.parse(json);
+
+    expect(parsed.persona).toEqual(persona);
+    expect(parsed.history).toHaveLength(1);
+    expect(parsed.history[0]).toEqual({
+      ...historyEntry,
+      snapshotPath: `./${buildSnapshotPath(historyEntry.url)}`,
+    });
   });
 });

@@ -25,6 +25,7 @@ import {
 } from "./persona-db.mjs";
 import {
   buildPersonaZip,
+  buildPersonaJson,
   parsePersonaZip,
   sanitizeSegment,
 } from "./zip-persona.mjs";
@@ -60,10 +61,23 @@ const historyTabBtn = /** @type {HTMLButtonElement | null} */ (
 const insightsTabBtn = /** @type {HTMLButtonElement | null} */ (
   document.getElementById("tab-insights")
 );
+const exportTabBtn = /** @type {HTMLButtonElement | null} */ (
+  document.getElementById("tab-export")
+);
 const historyPanel = document.getElementById("panel-history");
 const insightsPanel = document.getElementById("panel-insights");
+const exportPanel = document.getElementById("panel-export");
 const dropOverlay = document.getElementById("drop-overlay");
 const notificationEl = document.getElementById("notification");
+const exportJsonEl = /** @type {HTMLTextAreaElement | null} */ (
+  document.getElementById("export-json")
+);
+
+const tabs = [
+  { name: "history", button: historyTabBtn, panel: historyPanel },
+  { name: "insights", button: insightsTabBtn, panel: insightsPanel },
+  { name: "export", button: exportTabBtn, panel: exportPanel },
+];
 
 const historyProps = {
   getSnapshot: getPageSnapshot,
@@ -113,6 +127,7 @@ async function load() {
 
   historyTabBtn?.addEventListener("click", () => setActiveTab("history"));
   insightsTabBtn?.addEventListener("click", () => setActiveTab("insights"));
+  exportTabBtn?.addEventListener("click", () => setActiveTab("export"));
 
   if (personaNameInputEl) {
     personaNameInputEl.addEventListener("change", () => {
@@ -175,6 +190,7 @@ async function renderPersonaAndHistory(personaId) {
     renderPersonaName("", { disabled: true, placeholder: "No active persona" });
     renderHistoryTab([], historyProps);
     await renderInsights(undefined, insightsProps);
+    renderExportJson(undefined, undefined, []);
     return;
   }
 
@@ -188,6 +204,7 @@ async function renderPersonaAndHistory(personaId) {
   const history = await listHistoryForPersona(personaId);
   renderHistoryTab(history, historyProps);
   await renderInsights(personaId, insightsProps);
+  renderExportJson(personaId, persona, history);
 
   if (saveZipBtn) {
     saveZipBtn.disabled = !history.length;
@@ -216,19 +233,48 @@ function renderPersonaName(name, options = {}) {
 }
 
 /**
- * @param {"history" | "insights"} tab
+ * @param {"history" | "insights" | "export"} tab
  */
 function setActiveTab(tab) {
-  if (!historyTabBtn || !insightsTabBtn || !historyPanel || !insightsPanel) {
+  tabs.forEach(({ name, button, panel }) => {
+    if (!button || !panel) {
+      return;
+    }
+    const isActive = name === tab;
+    button.classList.toggle("active", isActive);
+    button.setAttribute("aria-selected", String(isActive));
+    panel.classList.toggle("active", isActive);
+  });
+}
+
+/**
+ * Render the persona.json preview for the export tab.
+ * @param {string | undefined} personaId
+ * @param {import("./types").PersonaRecord | undefined} persona
+ * @param {import("./types").HistoryRecord[]} history
+ */
+function renderExportJson(personaId, persona, history) {
+  if (!exportJsonEl) {
     return;
   }
-  const isHistory = tab === "history";
-  historyTabBtn.classList.toggle("active", isHistory);
-  insightsTabBtn.classList.toggle("active", !isHistory);
-  historyTabBtn.setAttribute("aria-selected", String(isHistory));
-  insightsTabBtn.setAttribute("aria-selected", String(!isHistory));
-  historyPanel.classList.toggle("active", isHistory);
-  insightsPanel.classList.toggle("active", !isHistory);
+  if (!personaId) {
+    exportJsonEl.value = "Select a persona to preview persona.json.";
+    return;
+  }
+
+  const personaForExport =
+    persona ||
+    {
+      id: personaId,
+      name: personaId,
+      createdAt: new Date().toISOString(),
+    };
+
+  exportJsonEl.value = buildPersonaJson(
+    personaForExport,
+    history.map((entry) => ({ entry }))
+  );
+  exportJsonEl.scrollTop = 0;
 }
 
 async function handleRenamePersona() {

@@ -45,6 +45,16 @@
         >
           Insights
         </button>
+        <button
+          id="tab-export"
+          class="tab-button"
+          role="tab"
+          aria-selected="false"
+          aria-controls="panel-export"
+          type="button"
+        >
+          JSON
+        </button>
       </div>
       <div
         id="panel-history"
@@ -86,6 +96,21 @@
         </div>
         <div id="insights-rows"></div>
         <p id="insights-empty" class="empty" hidden>No insights yet.</p>
+      </div>
+      <div
+        id="panel-export"
+        class="tab-panel"
+        role="tabpanel"
+        aria-labelledby="tab-export"
+      >
+        <p class="export-help">Preview of persona.json bundled in the export.</p>
+        <textarea
+          id="export-json"
+          class="export-json"
+          aria-label="persona.json preview"
+          readonly
+          spellcheck="false"
+        ></textarea>
       </div>
     </section>
     <script type="module" src="./options.mjs"></script>
